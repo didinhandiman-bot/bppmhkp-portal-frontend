@@ -1,0 +1,12 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "nararouter/agnes-2.5-flash",
+  "provider": {
+    "nararouter": {
+      "npm": "@ai-sdk/openai",
+      "name": "NaraRouter",
+      "baseURL": "https://router.bynara.id",
+      "apiKey": "sk-nry-Iff7qGUjt1szWiN3xTgvWiI1JxK9iVA_lGZvfD0Fa_A"
+    }
+  }
+}

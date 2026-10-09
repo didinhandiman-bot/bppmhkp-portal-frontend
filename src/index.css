@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Beritahu Tailwind v4 untuk memicu class dark jika tag <html> memiliki class="dark" */
+@variant dark (&:where(.dark, .dark *));
+
+/* Variable CSS kustom milik Anda */
+:root {
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --accent-border: #93c5fd;
+  --text-h: #111827;
+  --social-bg: #f3f4f6;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  --border: #374151;
+  --accent: #60a5fa;
+  --accent-bg: #1e293b;
+  --accent-border: #2563eb;
+  --text-h: #f9fafb;
+  --social-bg: #1f2937;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
