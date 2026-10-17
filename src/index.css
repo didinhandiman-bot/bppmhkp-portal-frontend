@@ -23,3 +23,59 @@
   --social-bg: #1f2937;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
 }
+
+/*
+ * Marker UPT pada peta sebaran: titik biru berdenyut.
+ *
+ * Dipakai oleh DivIcon Leaflet (`MapIndonesiaLeaflet.tsx`). Leaflet memberi
+ * wadah ikon `position: absolute`, jadi dua span di dalamnya cukup diatur
+ * dengan inset relatif terhadap wadah 20x20 px (core jadi 10x10 px karena
+ * `box-sizing: border-box` dari preflight Tailwind).
+ */
+.upt-pulse-marker {
+  background: transparent;
+  border: 0;
+}
+
+.upt-pulse-core {
+  position: absolute;
+  inset: 5px;
+  border-radius: 9999px;
+  background: #1d4ed8;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.upt-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.35);
+  animation: upt-pulse 2s ease-out infinite;
+}
+
+@keyframes upt-pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/*
+ * Sembunyikan kontrol atribusi Leaflet/OpenStreetMap pada peta sebaran.
+ * `attributionControl={false}` di `MapContainer` sudah mencegah kontrol ini
+ * dibuat; selector ini menjadi jaring pengaman bila kontrol dibuat ulang
+ * (mis. oleh plugin) atau muncul dari markup lama.
+ */
+.leaflet-control-attribution {
+  display: none !important;
+}

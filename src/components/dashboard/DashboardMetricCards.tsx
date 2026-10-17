@@ -2,6 +2,7 @@ import { FileCheck2, Layers, Ship, Sprout } from 'lucide-react';
 import type { DashboardSummaryKpi } from '../../types/dashboard';
 
 export interface DashboardMetricCardsProps {
+  scopeLimited?: boolean;
   data: DashboardSummaryKpi | null;
   isLoading: boolean;
 }
@@ -81,7 +82,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
  *
  * Kolom: 1 di mobile, 2 di tablet, 4 di desktop.
  */
-export default function DashboardMetricCards({ data, isLoading }: DashboardMetricCardsProps) {
+export default function DashboardMetricCards({ data, isLoading, scopeLimited = false }: DashboardMetricCardsProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -203,7 +204,7 @@ export default function DashboardMetricCards({ data, isLoading }: DashboardMetri
       {/* 4. Total Sertifikasi Nasional */}
       <article className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium text-slate-500">Total Sertifikasi Nasional</p>
+          <p className="text-sm font-medium text-slate-500">{scopeLimited ? 'Total Sertifikasi Wilayah UPT' : 'Total Sertifikasi Nasional'}</p>
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-600">
             <Layers className="h-5 w-5 text-white" aria-hidden="true" />
           </span>

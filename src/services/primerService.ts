@@ -10,6 +10,7 @@ export interface PrimerOverviewFilters {
   search?: string;
   kdIzin?: string;
   kdDaerah?: string;
+  uptId?: string;
 }
 
 export interface PrimerRingkasan {
@@ -363,6 +364,7 @@ export const getPrimerCertificates = async (
 ): Promise<PrimerCertificatesResponse> => {
   const res = await api.get<ApiResponse<unknown>>('/certificates', { params: toQuery(params) });
   const env = res.data;
+  unwrap(env, 'Sertifikat Primer');
   const envelope = asRecord(env);
   const rawData = envelope.data;
   const itemsRawArr: unknown[] = Array.isArray(rawData)
@@ -444,7 +446,7 @@ export const exportPrimerCertificates = async (params: Record<string, unknown> =
   });
   const blob = res.data;
   const disposition = res.headers['content-disposition'] as string | undefined;
-  let filename = 'primer-export.xlsx';
+  let filename = 'primer-export.csv';
   if (disposition) {
     const m = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
     if (m?.[1]) filename = decodeURIComponent(m[1]);

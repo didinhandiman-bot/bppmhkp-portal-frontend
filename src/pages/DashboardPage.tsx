@@ -1,3 +1,4 @@
+import { toErrorMessage } from '../utils/errors';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DashboardFilterBar from '../components/dashboard/DashboardFilterBar';
 import DashboardMetricCards from '../components/dashboard/DashboardMetricCards';
@@ -59,7 +60,9 @@ export const DashboardPage: React.FC = () => {
 
   const defaultRange = useMemo(() => createDefaultRange(), []);
   const [preset, setPreset] = useState<DashboardDatePreset>('ytd');
-  const [uptId, setUptId] = useState<string>('');
+  const [selectedUpt, setUptId] = useState<string>('');
+  const nationalAccess = user?.isNationalAccess === true;
+  const uptId = nationalAccess ? selectedUpt : user?.kdUnit ?? '';
   const [customStart, setCustomStart] = useState<string>(defaultRange.startDate);
   const [customEnd, setCustomEnd] = useState<string>(defaultRange.endDate);
 
@@ -124,7 +127,7 @@ export const DashboardPage: React.FC = () => {
         setState({
           key: requestKey,
           overview: null,
-          errorMessage: error instanceof Error ? error.message : 'Gagal memuat ringkasan dashboard',
+          errorMessage: toErrorMessage(error),
         });
       }
     })();
@@ -137,7 +140,7 @@ export const DashboardPage: React.FC = () => {
    */
   const isLoading = state?.key !== requestKey;
   const isCurrent = state?.key === requestKey;
-  const overview = state?.overview ?? null;
+  const overview = isCurrent ? state?.overview ?? null : null;
   const errorMessage = isCurrent ? state.errorMessage : null;
   const isRefetching = isLoading && state !== null;
 
@@ -164,7 +167,8 @@ export const DashboardPage: React.FC = () => {
         onEndDateChange={setCustomEnd}
         uptId={uptId}
         onUptChange={setUptId}
-        uptOptions={uptOptions}
+        allowNational={nationalAccess}
+        uptOptions={nationalAccess ? uptOptions : [{ value: uptId, label: uptOptions.find(option => option.value === uptId)?.label || 'UPT akun (' + uptId + ')', kota: '' }]}
         isLoadingUpt={uptOptions.length === 0 && uptError === null}
         defaultRange={defaultRange}
         isFetching={isRefetching}
@@ -195,7 +199,13 @@ export const DashboardPage: React.FC = () => {
         </div>
       ) : null}
 
-      <DashboardMetricCards data={overview?.summaryKpi ?? null} isLoading={isLoading} />
+      {overview?.scope?.kapalIncluded === false ? (
+        <p role="status" className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Data Primer mencakup kota/kabupaten wilayah UPT terpilih. Sertifikat kapal belum termasuk dalam ringkasan ini.
+        </p>
+      ) : null}
+
+      <DashboardMetricCards scopeLimited={!nationalAccess || uptId !== ''} data={overview?.summaryKpi ?? null} isLoading={isLoading} />
 
       <DashboardTrendChart data={overview?.monthlyTrends ?? null} isLoading={isLoading} />
 

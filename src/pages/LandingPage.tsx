@@ -1,5 +1,6 @@
 import { Navbar } from '../components/layout/Navbar';
 import { HeroSection } from '../sections/HeroSection';
+import { PetaSebarSection } from '../sections/PetaSebarSection';
 import { ServicesSection } from '../sections/ServicesSection';
 import { Footer } from '../components/layout/Footer';
 
@@ -12,6 +13,7 @@ export const LandingPage = () => {
       {/* 2. Konten Utama Landing Page */}
       <main className="flex-1">
         <HeroSection />
+        <PetaSebarSection />
         <ServicesSection />
       </main>
 

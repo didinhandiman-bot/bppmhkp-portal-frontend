@@ -1,3 +1,4 @@
+import { isAuthenticationFailure, decodeErrorBody } from '../utils/authFailure';
 import axios, {
   type AxiosError,
   type AxiosInstance,
@@ -16,7 +17,7 @@ const LOGIN_ROUTE = '/login';
  *   - 403 saat token tidak valid / kedaluwarsa (`authMiddleware`)
  * Menangani 401 saja membuat token kedaluwarsa lolos tanpa redirect.
  */
-const AUTH_FAILURE_STATUSES = new Set([401, 403]);
+
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1/auth';
 
@@ -43,15 +44,9 @@ export const OPTIONS_BASE_URL = import.meta.env.VITE_OPTIONS_BASE_URL || '/api/v
  */
 export const SKP_BASE_URL = import.meta.env.VITE_SKP_BASE_URL || '/api/v1/skp';
 
-/**
- * Base URL modul HACCP, di-mount backend di `/api/pasca-panen/haccp`.
- *
- * Berbeda dari SMKHP dan SKP, path ini TIDAK memakai prefiks `/api/v1`
- * (`app.js`: `app.use('/api/pasca-panen/haccp', haccpRoutes)`), jadi ditulis
- * apa adanya agar tidak menghasilkan `/api/v1/api/pasca-panen/...`.
- */
+/** Prefix utama HACCP; override environment tetap didukung. */
 export const HACCP_BASE_URL =
-  import.meta.env.VITE_HACCP_BASE_URL || '/api/pasca-panen/haccp';
+  import.meta.env.VITE_HACCP_BASE_URL || '/api/v1/pasca-panen/haccp';
 
 /**
  * Base URL dashboard ringkasan, di-mount backend di `/api/v1/dashboard`.
@@ -101,16 +96,18 @@ const withAuthInterceptors = (instance: AxiosInstance): AxiosInstance => {
   // Response Interceptor: tangani kegagalan auth (401/403).
   instance.interceptors.response.use(
     (response) => response,
-    (error: AxiosError<ApiErrorResponse>) => {
+    async (error: AxiosError<ApiErrorResponse>) => {
       const status = error.response?.status;
       const url = error.config?.url ?? '';
+      const body = await decodeErrorBody(error.response?.data);
+      if (error.response && body !== undefined && !(body instanceof Blob)) error.response.data = body as ApiErrorResponse;
 
       // Login yang gagal membalas 401/403 karena kredensial salah, bukan karena
       // sesi kedaluwarsa. Membersihkan token di sini akan membuang kredensial
       // yang barusan diketik user sebelum pesan errornya sempat tampil.
       const isAuthExempt = AUTH_EXEMPT_URLS.some((path) => url.includes(path));
 
-      if (status != null && AUTH_FAILURE_STATUSES.has(status) && !isAuthExempt) {
+      if (isAuthenticationFailure(status, body) && !isAuthExempt) {
         clearAuthState();
 
         if (!window.location.pathname.startsWith(LOGIN_ROUTE)) {
@@ -158,5 +155,17 @@ export const PRIMER_BASE_URL = import.meta.env.VITE_PRIMER_BASE_URL || "/api/v1/
 
 /** Instance untuk modul PRIMER. */
 export const PRIMER_API = createApiInstance(PRIMER_BASE_URL);
+
+/**
+ * Base URL modul landing page (`/api/v1/landing`), di-mount backend di
+ * `src/routes/landingRoutes.js`. Endpoint di bawahnya (`peta-sebar`,
+ * `upt-marker`) bersifat PUBLIK, jadi instance ini tetap dipakai walau tanpa
+ * token — interceptor auth hanya menempelkan Bearer bila token memang ada.
+ */
+export const LANDING_BASE_URL =
+  import.meta.env.VITE_LANDING_BASE_URL || '/api/v1/landing';
+
+/** Instance untuk modul landing page (peta sebaran). */
+export const LANDING_API = createApiInstance(LANDING_BASE_URL);
 
 export default API;

@@ -5,11 +5,7 @@
  * (`services/dashboardOverviewService.js`), yang memakai `camelCase` — berbeda
  * dari modul pascapanen yang `snake_case`.
  *
- * PENTING: `monthlyTrends`, `uptDistribution`, dan `recentActivities` saat ini
- * dikirim backend sebagai array KOSONG (literal `[]` di
- * `dashboardOverviewService.getOverviewMetrics`), bukan karena tidak ada data
- * di database. Ketiganya karena itu wajib punya empty state di UI — bukan
- * menunggu data yang tidak pernah dikirim.
+ * Tren, distribusi UPT, aktivitas, dan scope berasal dari hasil query backend.
  */
 
 /** Ringkasan sektor ekspor (`EksporRepository.getAggregatedSummary`). */
@@ -143,7 +139,15 @@ export interface DashboardRecentActivity {
 }
 
 /** Isi `data` pada `GET /api/v1/dashboard/overview`. */
+export interface DashboardScope {
+  primerUpt: string | null;
+  primerCities: string[] | null;
+  kapalIncluded: boolean;
+  primerDistribution: 'upt';
+}
+
 export interface DashboardOverview {
+  scope: DashboardScope | null;
   summaryKpi: DashboardSummaryKpi;
   /** Masih kosong di backend; lihat catatan di atas. */
   monthlyTrends: DashboardMonthlyTrend[];

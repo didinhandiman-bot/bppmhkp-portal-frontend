@@ -1,3 +1,8 @@
+import { useAuth } from '../../hooks/useAuth';
+import { fetchMasterUptOptions } from '../../services/smkhpService';
+import type { UptOption } from '../../types/upt';
+import { toErrorMessage } from '../../utils/errors';
+import SelectField from '../../components/common/SelectField';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bar,
@@ -133,6 +138,16 @@ function BadgeHasil({ v }: { v: string | null | undefined }) {
 
 export const PrimerDashboardPage: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const nationalAccess = user?.isNationalAccess === true;
+  const [selectedUpt, setSelectedUpt] = useState('');
+  const uptId = nationalAccess ? selectedUpt : user?.kdUnit ?? '';
+  const [uptOptions, setUptOptions] = useState<UptOption[]>([]);
+  const [uptError, setUptError] = useState<string | null>(null);
+  const [uptLoading, setUptLoading] = useState(true);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
+  const [tableError, setTableError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const r = defaultRange();
 
   const [jenisIzin, setJenisIzin] = useState<PrimerIzinType>(
@@ -156,9 +171,29 @@ export const PrimerDashboardPage: React.FC = () => {
   const reqOv = useRef(0);
   const reqCert = useRef(0);
 
-  const kdIzinDefault = KD_IZIN_BY_PATH[location.pathname] || undefined;
+  const activePath = Object.keys(JENIS_BY_PATH).find(path => JENIS_BY_PATH[path] === jenisIzin);
+  const kdIzinDefault = activePath ? KD_IZIN_BY_PATH[activePath] : undefined;
   const currentKdIzin = kdIzinDefault;
   const isKapal = (currentKdIzin || '').trim() === '032000000033';
+  // Kapal hanya tidak tersedia untuk user NON-nasional.
+  // User nasional boleh akses kapal baik tanpa filter UPT (nasional view)
+  // maupun DENGAN filter UPT (nasional pilih UPT).
+  const kapalUnavailable = isKapal && !nationalAccess;
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const options = await fetchMasterUptOptions();
+        if (!cancelled) { setUptOptions(options); setUptError(null); }
+      } catch (error) {
+        if (!cancelled) setUptError(toErrorMessage(error));
+      } finally {
+        if (!cancelled) setUptLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   // `jenisIzin` mengikuti sub-menu yang aktif, tapi tetap bisa diubah user lewat
   // dropdown. Nilai default dihitung ulang saat pathname berubah, lalu
@@ -176,30 +211,44 @@ export const PrimerDashboardPage: React.FC = () => {
 
   useEffect(() => {
     const id = ++reqOv.current;
+    let cancelled = false;
     void (async () => {
       try {
+        setOv(null);
+        setOverviewError(null);
+        if (kapalUnavailable) return;
         const res = await getPrimerOverview({
+          uptId,
           kdIzin: kdIzinDefault,
           jenisIzin,
           startDate,
           endDate,
           search: dSearch,
         } as Record<string, unknown>);
-        if (id === reqOv.current) {
+        if (!cancelled && id === reqOv.current) {
           setOv(res);
         }
-      } catch {
-        // silent
+      } catch (error) {
+        if (!cancelled && id === reqOv.current) { setOv(null); setOverviewError(toErrorMessage(error)); }
       }
     })();
-  }, [jenisIzin, kdIzinDefault, startDate, endDate, dSearch, location.pathname]);
+    return () => { cancelled = true; };
+  }, [jenisIzin, kdIzinDefault, startDate, endDate, dSearch, location.pathname, uptId, kapalUnavailable]);
 
   useEffect(() => {
     const id = ++reqCert.current;
+    let cancelled = false;
     void (async () => {
       setLoading(true);
       try {
+        setItems([]);
+        setTotalRows(0);
+        setTotalPages(1);
+        setTableError(null);
+        setDetail(null);
+        if (kapalUnavailable) return;
         const res = await getPrimerCertificates({
+          uptId,
           kdIzin: kdIzinDefault,
           jenisIzin,
           startDate,
@@ -208,29 +257,34 @@ export const PrimerDashboardPage: React.FC = () => {
           page,
           limit,
         });
-        if (id === reqCert.current) {
+        if (!cancelled && id === reqCert.current) {
           setItems(res.items);
           setTotalPages(res.meta.totalPages);
           setTotalRows(res.meta.totalRows);
         }
+      } catch (error) {
+        if (!cancelled && id === reqCert.current) setTableError(toErrorMessage(error));
       } finally {
-        if (id === reqCert.current) setLoading(false);
+        if (!cancelled && id === reqCert.current) setLoading(false);
       }
     })();
-  }, [jenisIzin, kdIzinDefault, startDate, endDate, dSearch, page, limit, location.pathname]);
+    return () => { cancelled = true; };
+  }, [jenisIzin, kdIzinDefault, startDate, endDate, dSearch, page, limit, location.pathname, uptId, kapalUnavailable]);
 
   
 
-  const handleExport = useCallback(async (fmt: 'excel' | 'csv') => {
+  const handleExport = useCallback(async () => {
     try {
+      if (kapalUnavailable) return;
       setExp(true);
+      setExportError(null);
       const { blob, filename } = await exportPrimerCertificates({
+        uptId,
         kdIzin: kdIzinDefault,
         jenisIzin,
         startDate,
         endDate,
         search: dSearch,
-        format: fmt,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -238,10 +292,12 @@ export const PrimerDashboardPage: React.FC = () => {
       a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
+    } catch (error) {
+      setExportError(toErrorMessage(error));
     } finally {
       setExp(false);
     }
-  }, [jenisIzin, kdIzinDefault, startDate, endDate, dSearch]);
+  }, [jenisIzin, kdIzinDefault, startDate, endDate, dSearch, uptId, kapalUnavailable]);
 
   /**
    * Donut hasil kelayakan untuk jalur primer reguler.
@@ -313,8 +369,30 @@ export const PrimerDashboardPage: React.FC = () => {
         </p>
       </header>
 
+      {(kapalUnavailable || overviewError || tableError || exportError || uptError) ? (
+        <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {kapalUnavailable ? 'Data kapal belum tersedia untuk akses UPT. Akses nasional tanpa filter UPT tetap tersedia bagi akun nasional.' :
+            [...new Set([overviewError, tableError, exportError, uptError].filter(Boolean))].join(' ')}
+        </div>
+      ) : null}
+      {Array.isArray(ov?.filterEfektif?.cityScope) ? (
+        <p role="status" className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Data Primer dibatasi pada {ov.filterEfektif.cityScope.length} kota/kabupaten wilayah UPT akun atau UPT terpilih.
+        </p>
+      ) : null}
+
       {/* FILTER BAR */}
       <section className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <SelectField
+          idPrefix="primer-filter"
+          label="UPT"
+          value={uptId}
+          disabled={!nationalAccess}
+          isBusy={uptLoading}
+          onChange={(value) => { setSelectedUpt(value); setPage(1); setExportError(null); }}
+          options={nationalAccess ? [{value:'',label:'Semua UPT / Nasional'}, ...uptOptions] :
+            [{value:uptId,label:uptOptions.find(option => option.value === uptId)?.label || 'UPT akun (' + uptId + ')'}]}
+        />
         <div className="flex min-w-[180px] flex-col gap-1.5">
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Jenis Izin</label>
           <select
@@ -385,15 +463,8 @@ export const PrimerDashboardPage: React.FC = () => {
           <span className="text-xs text-slate-500">Terakhir diperbarui: {fmtLast}</span>
           <div className="flex gap-1">
             <button
-              disabled={exp}
-              onClick={() => handleExport('excel')}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm hover:bg-slate-50 disabled:opacity-50"
-            >
-              <Download className="h-4 w-4" /> Export Excel
-            </button>
-            <button
-              disabled={exp}
-              onClick={() => handleExport('csv')}
+              disabled={exp || kapalUnavailable || loading || tableError !== null}
+              onClick={() => void handleExport()}
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm hover:bg-slate-50 disabled:opacity-50"
             >
               <Download className="h-4 w-4" /> Export CSV

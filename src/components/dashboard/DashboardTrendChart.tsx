@@ -49,6 +49,10 @@ function toMonthLabel(value: string | number): string {
     return BULAN[index] ?? String(value);
   }
   const text = String(value).trim();
+  if (/^\d{4}-(0[1-9]|1[0-2])$/.test(text)) {
+    const [year, month] = text.split('-').map(Number);
+    return new Intl.DateTimeFormat('id-ID', {month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(year, month - 1, 1)));
+  }
   return text === '' ? '—' : text;
 }
 

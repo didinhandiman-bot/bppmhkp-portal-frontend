@@ -4,9 +4,9 @@
  * Berbeda dari versi dashboard-fe, modul ini tidak/client-side tidak memegang
  * token publik: autentikasi memakai JWT sesi yang disuntik interceptor di
  * `services/api.ts`. Karena itu 401/403 sudah ditangani interceptor (membersihkan
- * state auth lalu mengarahkan ke /login) dan TIDAK perlu pesan khusus di sini.
+ * Sesi dihapus hanya untuk galat autentikasi JWT; penolakan scope ditampilkan di halaman.
  */
-import { SMKHP_BASE_URL } from '../services/api';
+
 
 /**
  * Mengubah error apa pun menjadi pesan yang dapat dipahami pengguna.
@@ -38,7 +38,7 @@ export function toErrorMessage(error: unknown): string {
     }
 
     // Response tidak ada: sebagian besar berarti jaringan/offline/proxy.
-    return `Tidak dapat menghubungi server API (${SMKHP_BASE_URL}).`;
+    return 'Tidak dapat menghubungi server API.';
   }
 
   if (error instanceof Error) {

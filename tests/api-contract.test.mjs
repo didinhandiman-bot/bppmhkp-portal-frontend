@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import { registerHooks } from 'node:module';
+import { isAuthenticationFailure, decodeErrorBody } from '../src/utils/authFailure.ts';
+assert.equal(isAuthenticationFailure(401,{}),true);
+assert.equal(isAuthenticationFailure(403,{status:'error',message:'Token tidak valid atau kedaluwarsa'}),true);
+for(const message of ['Pemetaan kota UPT tidak tersedia','Klaim akses UPT tidak valid','Akses data kapal belum tersedia']) assert.equal(isAuthenticationFailure(403,{success:false,message}),false);
+const decoded=await decodeErrorBody(new Blob([JSON.stringify({success:false,message:'Akses data kapal belum tersedia'})]));
+assert.equal(isAuthenticationFailure(403,decoded),false);
+assert.equal(decoded.message,'Akses data kapal belum tersedia');
+const expired=await decodeErrorBody(new Blob([JSON.stringify({status:'error',message:'Token tidak valid atau kedaluwarsa'})]));
+assert.equal(isAuthenticationFailure(403,expired),true);
+globalThis.contractPayload={success:true,data:{scope:{primerUpt:'15.0',primerCities:['3101'],kapalIncluded:false,primerDistribution:'upt'},monthlyTrends:[{month:'2026-01',ekspor:'2',pascaPanen:'3',primer:'4'}],uptDistribution:[{namaUpt:'Jakarta',ekspor:2,pascaPanen:3,primer:4,grandTotal:9}],recentActivities:[{id:'primer:1',date:'2026-01-15',status:'Terbit'}]}};
+registerHooks({resolve(specifier,context,next){
+ if(specifier==='./api' && context.parentURL?.includes('/src/services/'))return {url:'test:frontend-api',shortCircuit:true};
+ if(specifier.startsWith('.') && !/\.[a-z]+$/.test(specifier))return next(specifier+'.ts',context);
+ return next(specifier,context);
+},load(url,context,next){
+ if(url==='test:frontend-api')return {format:'module',shortCircuit:true,source:'const api={get:async()=>({data:globalThis.contractPayload})}; export const DASHBOARD_API=api,PRIMER_API=api;'};
+ return next(url,context);
+}});
+const {fetchDashboardOverview}=await import('../src/services/dashboardService.ts');
+const result=await fetchDashboardOverview({uptId:'15.0'});
+assert.deepEqual(result.scope,{primerUpt:'15.0',primerCities:['3101'],kapalIncluded:false,primerDistribution:'upt'});
+assert.deepEqual(result.monthlyTrends,[{month:'2026-01',ekspor:2,pascaPanen:3,primer:4}]);
+assert.equal(result.uptDistribution[0].grandTotal,9);
+assert.equal(result.recentActivities[0].status,'Terbit');
+const {getPrimerOverview,getPrimerCertificates}=await import('../src/services/primerService.ts');
+globalThis.contractPayload={success:true,data:{ringkasan:{totalSertifikat:4},filterEfektif:{cityScope:['3101']}}};
+assert.deepEqual((await getPrimerOverview({uptId:'15.0'})).filterEfektif.cityScope,['3101']);
+globalThis.contractPayload={success:false,message:'Pemetaan kota UPT tidak tersedia'};
+await assert.rejects(getPrimerCertificates(),/Pemetaan kota/);
+console.log('PASS: scope 403 preserves session, JWT expiry, Blob errors, dashboard and Primer contracts.');

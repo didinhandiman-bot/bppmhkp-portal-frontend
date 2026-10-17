@@ -27,6 +27,9 @@ export const Navbar = () => {
             <a href="#beranda" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Beranda
             </a>
+            <a href="#peta-sebar" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              Peta Sebar
+            </a>
             <a href="#layanan" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               Layanan
             </a>

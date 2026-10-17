@@ -7,10 +7,7 @@
  * `DashboardOverviewService.getOverviewMetrics`), jadi filter tidak perlu
  * memecah panggilan per pilar.
  *
- * Catatan penting soal data: `monthlyTrends`, `uptDistribution`, dan
- * `recentActivities` masih dikirim sebagai array kosong oleh backend. Mapping di
- * bawah tetap menormalkan bentuknya sehingga modul ini siap bekerja begitu
- * backend mulai mengisinya — tanpa perubahan di sini.
+ * Data dan scope dipetakan dari respons backend.
  */
 
 import { DASHBOARD_API } from './api';
@@ -227,6 +224,12 @@ export const fetchDashboardOverview = async (
   const data = asRecord(unwrap(response.data, 'Ringkasan dashboard'));
 
   return {
+    scope: data.scope && typeof data.scope === 'object' ? {
+      primerUpt: typeof asRecord(data.scope).primerUpt === 'string' ? String(asRecord(data.scope).primerUpt) : null,
+      primerCities: Array.isArray(asRecord(data.scope).primerCities) ? asArray(asRecord(data.scope).primerCities).filter((city): city is string => typeof city === 'string') : null,
+      kapalIncluded: asRecord(data.scope).kapalIncluded === true,
+      primerDistribution: 'upt',
+    } : null,
     summaryKpi: mapSummaryKpi(data.summaryKpi),
     monthlyTrends: mapMonthlyTrends(data.monthlyTrends),
     uptDistribution: mapUptDistribution(data.uptDistribution),

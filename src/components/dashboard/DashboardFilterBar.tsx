@@ -23,6 +23,7 @@ export interface DashboardFilterBarProps {
   /** Rentang periode berjalan, dipakai tombol Reset. */
   defaultRange: { startDate: string; endDate: string };
   isFetching?: boolean;
+  allowNational?: boolean;
 }
 
 const INPUT_DATE_CLASS =
@@ -47,6 +48,7 @@ export default function DashboardFilterBar({
   isLoadingUpt,
   defaultRange,
   isFetching = false,
+  allowNational = true,
 }: DashboardFilterBarProps) {
   const isCustom = preset === 'custom';
   const hasCustomDate =
@@ -55,7 +57,7 @@ export default function DashboardFilterBar({
 
   const handleReset = () => {
     onPresetChange('ytd');
-    onUptChange('');
+    if (allowNational) onUptChange('');
     onStartDateChange(defaultRange.startDate);
     onEndDateChange(defaultRange.endDate);
   };
@@ -130,9 +132,10 @@ export default function DashboardFilterBar({
           value={uptId}
           onChange={onUptChange}
           isBusy={isLoadingUpt}
+          disabled={!allowNational}
           className="min-w-[16rem]"
           options={[
-            { value: '', label: DASHBOARD_UPT_SEMUA },
+            ...(allowNational ? [{ value: '', label: DASHBOARD_UPT_SEMUA }] : []),
             // `UptOption.value` = `KD_UNIT` kanonik dari master, mis. `15.0`.
             ...uptOptions.map((option) => ({ value: option.value, label: option.label })),
           ]}
