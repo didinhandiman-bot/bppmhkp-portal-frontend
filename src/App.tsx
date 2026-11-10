@@ -9,6 +9,7 @@ import { SmkhpView } from './pages/pascapanen/SmkhpView';
 import { DashboardEkspor } from './pages/ekspor/DashboardEkspor';
 import { DashboardSkp } from './pages/skp/DashboardSkp';
 import { DashboardHaccp } from './pages/haccp/DashboardHaccp';
+import { DashboardSpdi } from './pages/spdi/DashboardSpdi';
 import { PrimerDashboardPage } from './pages/primer/PrimerDashboardPage';
 import { ComingSoon } from './pages/common/ComingSoon';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
@@ -29,6 +30,7 @@ const IMPLEMENTED_PAGES: Record<string, React.ComponentType> = {
   '/ekspor': DashboardEkspor,
   '/pascapanen/skp': DashboardSkp,
   '/pascapanen/haccp': DashboardHaccp,
+  '/pascapanen/spdi': DashboardSpdi,
   '/primer': PrimerDashboardPage,
   '/primer/cpib': PrimerDashboardPage,
   '/primer/cbib': PrimerDashboardPage,

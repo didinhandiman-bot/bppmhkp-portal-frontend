@@ -92,7 +92,7 @@ export const MODULE_NAVIGATION: NavEntry[] = [
       {
         label: 'SPDI',
         path: '/pascapanen/spdi',
-        status: 'coming-soon',
+        status: 'active',
         description: 'Sistem pengawasan proses di tingkat industri.',
       },
     ],

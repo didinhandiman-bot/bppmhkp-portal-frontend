@@ -49,6 +49,14 @@ export const HACCP_BASE_URL =
   import.meta.env.VITE_HACCP_BASE_URL || '/api/v1/pasca-panen/haccp';
 
 /**
+ * Base URL modul SPDI Pascapanen, di-mount backend di
+ * `/api/v1/pascapanen/spdi` (`routes/index.js`). Path relatif supaya melewati
+ * Vite proxy (`/api` -> localhost:5002), sama seperti modul lain.
+ */
+export const SPDI_BASE_URL =
+  import.meta.env.VITE_SPDI_BASE_URL || '/api/v1/pascapanen/spdi';
+
+/**
  * Base URL dashboard ringkasan, di-mount backend di `/api/v1/dashboard`.
  *
  * Butuh instance sendiri: instance auth berpatokan `/api/v1/auth`, jadi
@@ -146,6 +154,9 @@ export const SKP_API = createApiInstance(SKP_BASE_URL);
 
 /** Instance untuk modul HACCP (Pasca Panen). */
 export const HACCP_API = createApiInstance(HACCP_BASE_URL);
+
+/** Instance untuk modul SPDI Pascapanen (dashboard + daftar unit). */
+export const SPDI_API = createApiInstance(SPDI_BASE_URL);
 
 /** Instance untuk dashboard ringkasan eksekutif. */
 export const DASHBOARD_API = createApiInstance(DASHBOARD_BASE_URL);
