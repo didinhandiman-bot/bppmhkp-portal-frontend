@@ -25,9 +25,11 @@ export interface SebaranHaccp {
   gradeC: number;
 }
 
-/** Rincian pasca panen (SKP + HACCP) per provinsi. */
+/** Rincian pasca panen (SKP + SPDI + HACCP) per provinsi. */
 export interface SebaranPascaPanen {
   skp: number;
+  /** Sertifikat SPDI yang sudah terbit (`tgl_terbit` terisi). */
+  spdi: number;
   haccp: SebaranHaccp;
   jumlahUpi: number;
 }

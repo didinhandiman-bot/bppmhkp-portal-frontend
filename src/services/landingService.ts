@@ -95,6 +95,7 @@ const mapPascaPanen = (value: unknown): SebaranPascaPanen => {
   const record = asRecord(value);
   return {
     skp: pickNumber(record, 'skp'),
+    spdi: pickNumber(record, 'spdi'),
     haccp: mapHaccp(record.haccp),
     jumlahUpi: pickNumber(record, 'jumlahUpi'),
   };

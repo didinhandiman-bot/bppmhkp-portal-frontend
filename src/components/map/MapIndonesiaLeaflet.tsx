@@ -95,6 +95,7 @@ const provinceTotal = (provinsi: ProvinsiSebaran): number => {
     primer.cdoib +
     primer.cpibKapal +
     pascaPanen.skp +
+    pascaPanen.spdi +
     pascaPanen.haccp.gradeA +
     pascaPanen.haccp.gradeB +
     pascaPanen.haccp.gradeC
@@ -413,6 +414,13 @@ export default function MapIndonesiaLeaflet({ data, selectedYear }: MapIndonesia
                   <span className="text-slate-700 dark:text-slate-200">SKP</span>
                   <span className="font-bold text-emerald-600 dark:text-emerald-400">
                     {(activeData?.pascaPanen.skp ?? 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
+
+                <div className="flex justify-between border-b border-slate-100 pb-1 font-semibold dark:border-slate-800">
+                  <span className="text-slate-700 dark:text-slate-200">SPDI</span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {(activeData?.pascaPanen.spdi ?? 0).toLocaleString('id-ID')}
                   </span>
                 </div>
 

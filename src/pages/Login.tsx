@@ -41,7 +41,7 @@ export const Login: React.FC = () => {
         return;
       }
 
-      navigate('/ekspor', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err: unknown) {
       if (axios.isAxiosError<ApiErrorResponse>(err)) {
         // Backend menjawab role yang ditolak dengan 403 dan envelope
